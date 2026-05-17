@@ -39,8 +39,8 @@ DNS queries → raw.githubusercontent.com
         │
         ▼
 Execution
-ggWmgFMT.exe (RemCom) + L9XJe2iA.exe (Rozena) written to C:\Windows
-APPRUNTIME.EXE masquerading as legitimate binary
+ggWmgFMT.exe (RemCom) + L9XJe2iA.exe (Rozena) written to
+C:\Windows APPRUNTIME.EXE masquerading as legitimate binary
         │
         ▼
 Privilege Escalation
@@ -49,7 +49,7 @@ Binaries written to %systemroot% — requires SYSTEM privileges
         ▼
 Persistence (6 mechanisms — redundant by design)
 Registry Run Key → Scheduled Task → Service
-Spooler Failure Action → WMI Consumer → Backdoor Account
+Spooler Failure Action → WMI Consumer Event → Backdoor Account
         │
         ▼
 C2 Communication
