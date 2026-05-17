@@ -25,7 +25,7 @@ This investigation was conducted using host-based forensic artifacts collected v
 | **Masquerading Binary** | APPRUNTIME.EXE — no legitimate Windows binary exists with this name |
 | **Persistence Mechanisms** | 6 independent mechanisms — mutually reinforcing by design |
 | **Lateral Movement** | Compromised agadmin account — SMB sessions into WKS-94ZA (x4) + WKS-A29B (x1) |
-| **C2 Channels** | dormaire.euwf.cn:443 (reverse shell) + fini-27q.pages.dev:8080 (WMI payload) + 10.0.2.6 (internal pivot) |
+| **C2 Channels** | dormaire.euwf.cn:443 (reverse shell) + fini-27q.pages.dev:8080 (WMI Consumer payload) + 10.0.2.6 (internal pivot) |
 | **Staging Share** | share$ → C:\Users\Public\Music (hidden staging directory) |
 | **Backdoor Account** | helpdesk — local admin created by attacker on WKS-94ZA |
 
