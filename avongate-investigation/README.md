@@ -32,36 +32,39 @@ This investigation was conducted using host-based forensic artifacts collected v
 ---
 
 ## Attack Overview
+
+```
 Initial Access (WKS-94ZA)
 DNS queries → raw.githubusercontent.com
-│
-▼
+        │
+        ▼
 Execution
 ggWmgFMT.exe (RemCom) + L9XJe2iA.exe (Rozena) written to C:\Windows
 APPRUNTIME.EXE masquerading as legitimate binary
-│
-▼
+        │
+        ▼
 Privilege Escalation
 Binaries written to %systemroot% — requires SYSTEM privileges
-│
-▼
+        │
+        ▼
 Persistence (6 mechanisms — redundant by design)
-Registry Run Key → Scheduled Task → Service → Spooler Failure Action → WMI Consumer → Backdoor Account
-│
-▼
+Registry Run Key → Scheduled Task → Service
+Spooler Failure Action → WMI Consumer → Backdoor Account
+        │
+        ▼
 C2 Communication
 TCP reverse shell → dormaire.euwf.cn:443 (fileless, in-memory)
 WMI payload delivery → fini-27q.pages.dev:8080
 Internal pivot → 10.0.2.6
-│
-▼
+        │
+        ▼
 Lateral Movement
 agadmin account — SMB into WKS-94ZA + WKS-A29B
-│
-▼
+        │
+        ▼
 Collection
 share$ → C:\Users\Public\Music (hidden staging share)
----
+```
 
 ## Investigation Files
 
