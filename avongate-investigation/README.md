@@ -21,7 +21,7 @@ This investigation was conducted using host-based forensic artifacts collected v
 |---|---|
 | **Patient Zero** | WKS-94ZA |
 | **Initial Access Vector** | DNS queries to raw.githubusercontent.com — payload delivery |
-| **Malware Identified** | ggWmgFMT.exe (RemCom) + L9XJe2iA.exe (Rozena backdoor) |
+| **Malware Identified** | ggWmgFMT.exe (RemCom/C2) + L9XJe2iA.exe (Rozena backdoor) |
 | **Masquerading Binary** | APPRUNTIME.EXE — no legitimate Windows binary exists with this name |
 | **Persistence Mechanisms** | 6 independent mechanisms — mutually reinforcing by design |
 | **Lateral Movement** | Compromised agadmin account — SMB sessions into WKS-94ZA (x4) + WKS-A29B (x1) |
