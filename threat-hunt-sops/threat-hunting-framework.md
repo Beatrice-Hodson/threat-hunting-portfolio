@@ -1,6 +1,7 @@
 # Threat Hunting Framework — Universal Detection Methodology
 
 > "Understand what artifacts a tool leaves behind and where that telemetry lives in your environment, then transform the data to surface it."
+
 > — Adapted from Andrew Prince, SOC 201
 
 ---
