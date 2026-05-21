@@ -58,7 +58,7 @@ TTPs.
 ---
 
 ## Threat Hunting SOPs
-> Coming soon — standardized operating procedures for 
+> Standardized operating procedures for 
 > hypothesis-driven threat hunting engagements
 
 ---
