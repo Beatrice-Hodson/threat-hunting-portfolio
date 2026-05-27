@@ -1,247 +1,194 @@
 # Threat Hunting Framework — Universal Detection Methodology
 
-> "Understand what artifacts a tool leaves behind and where that telemetry lives in your environment, then transform the data to surface it."
+*Developed by Bea Hodson through hands-on SOC analysis, incident response, and enterprise-level intrusion investigations.*
 
-> — Adapted from Andrew Prince, SOC 201
+---
+
+> "It is not enough to have a framework or a checklist. Alone, these produce mediocre hypotheses at best. It is the ability to think like the attacker at each stage of the intrusion that allows the defender to retrace the attacker's steps with higher certainty. The essential question, 'What would I do next if I were them?', backed by specific threat intelligence, is what generates the strong hypotheses needed to trace the entirety of the attack chain."
+> — Bea Hodson
 
 ---
 
 ## Overview
 
-This document captures a repeatable, tool-agnostic threat hunting methodology. It applies whether you are hunting for a known adversary tool, investigating a new TTP from a threat report, or building detections from scratch. The process is the same every time — only the artifact changes.
+This document captures a repeatable, tool-agnostic threat hunting methodology. It applies whether you are hunting for a known adversary tool, investigating a new TTP from a threat report, or responding to an active intrusion. The process is the same every time — only the artifact changes.
+
+This methodology was developed and validated across multiple enterprise-level intrusion investigations including a full Kansa-based IR lab and a live PSAP certification exam investigation spanning 4 compromised hosts.
 
 ---
 
-## Section 1 — The Universal Hunting Process
+## The 5-Phase Investigation Framework
 
-Every hunt, regardless of the tool or TTP, follows this six-step workflow:
-
-**Step 1 — Understand the tool's artifacts**
-Before touching any data, answer: what does this tool leave behind? Files, services, registry keys, named pipes, scheduled tasks, network connections? Every tool has a forensic footprint. Know it before you hunt.
-
-**Step 2 — Find the telemetry source**
-Where does evidence of those artifacts appear in your environment? Sysmon? Windows Security log? System log? EDR telemetry? DNS logs? You cannot hunt what you cannot see — identify the data source first.
-
-**Step 3 — Transform the data to surface it**
-Raw telemetry is noise. Use stacking, frequency analysis, aggregation, or filtering to make the anomaly visible. Rare = suspicious. Common = baseline. Surface the outliers.
-
-**Step 4 — Identify the naming pattern**
-Attackers cannot fully control every artifact they leave. Tools often generate predictable patterns — random service names, specific pipe formats, consistent registry key structures. Find the pattern that distinguishes malicious from legitimate.
-
-**Step 5 — Encode the pattern into a detection**
-Translate the naming pattern into a query or rule — Splunk SPL, Sigma, KQL, or regex. Make it repeatable and shareable. A hunt you run once is useful. A detection you deploy is permanent.
-
-**Step 6 — Apply universally**
-A pattern that works for one tool often applies to variants and similar tools. Broaden the detection. Think about what other tools leave the same type of artifact and whether the same logic catches them.
+| Phase | Name | Key Actions |
+|---|---|---|
+| 1 | Pre-Hunt Intelligence | Read threat actor profile. Map to real APT groups. Build weighted MITRE Navigator layer. Identify highest overlap TTPs. |
+| 2 | Initial Triage | Run pstree for big picture. Identify patient zero. Form first hypothesis based on attacker mindset. |
+| 3 | Phased Investigation | Follow attack chain chronologically. One phase per tactic. Each phase = hypothesis + query + analysis. Prove or disprove. |
+| 4 | Validation | Kansa for scope confirmation. Cross-reference log sources. Verify every assumption with evidence. |
+| 5 | Documentation | Incident summary writes itself. Timeline built from phases. Report follows naturally from the evidence. |
 
 ---
 
-## Section 2 — Attacker Naming Strategies
+## The 7-Step Investigation Process
 
-When deploying tools, attackers use one of two naming approaches. Knowing which one you are dealing with shapes your detection strategy.
+    Step 1 — Build Threat Intelligence Profile
+        Who is this attacker?
+        What do they want?
+        How do they operate?
+        Which sectors do they target?
+        Build a weighted MITRE Navigator layer before touching any data.
 
-### Approach 1 — Masquerading
+    Step 2 — Map to MITRE ATT&CK
+        What TTPs should I hunt based on this actor?
+        Where is the evidence likely to live?
+        Which log sources are most relevant?
+
+    Step 3 — Get the Big Picture
+        Run pstree to see the full attack chain visually.
+        Understand the story before drilling into individual artifacts.
+        Identify patient zero and anchor the timeline.
+
+    Step 4 — Think Like the Attacker
+        At each stage ask: "What would I do next if I were them?"
+        That question becomes your next hypothesis automatically.
+        Backed by specific threat intelligence, this generates
+        strong, directed hypotheses — not guesses.
+
+    Step 5 — Prove It With Evidence
+        Query the right log source.
+        Find the artifact.
+        Document with EID, timestamp, host, and command line.
+        If you cannot reference specific evidence, you do not
+        have a proven finding.
+
+    Step 6 — Pivot to Next Hypothesis
+        What did finding this tell me about what the attacker did next?
+        Each finding generates the next question.
+        Return to Step 4.
+
+    Step 7 — Build the Complete Story
+        The report writes itself because you followed the chain.
+        Every phase has hypothesis, evidence, and analysis.
+        Documentation is not a separate task — it is the output
+        of doing the investigation correctly.
+
+---
+
+## Phase 3 Deep Dive — Hypothesis Quality Check
+
+For every finding in the phased investigation, validate it against these three questions before including it in your report:
+
+**WHAT — Exactly did you see?**
+Specific EIDs, timestamps, IPs, command lines. If you cannot reference specific evidence you do not have a proven finding.
+
+**HOW — Does it connect to other phases?**
+Each finding should reference prior phase evidence. Findings that stand alone without connection to the broader attack chain belong in an appendix, not the main report.
+
+**WHY — Does it matter?**
+Control failure, attack progression, or business impact. If you cannot answer why it matters, it does not belong in the report.
+
+---
+
+## The Universal Detection Workflow
+
+Beyond active investigations, this methodology applies to building durable detections from any tool or TTP.
+
+**Understand the artifact → Find the telemetry → Transform the data → Encode the pattern → Deploy universally**
+
+For any attacker tool or technique, answer these four questions:
+
+    What does it create?
+        Files, services, scheduled tasks, registry keys,
+        named pipes, network connections, WMI subscriptions
+
+    Where is the telemetry?
+        Sysmon EID 1  -- Process Creation
+        Sysmon EID 3  -- Network Connection
+        Sysmon EID 11 -- File Creation
+        Sysmon EID 13 -- Registry Value Set
+        Sysmon EID 17 -- Pipe Created
+        Sysmon EID 18 -- Pipe Connected
+        Sysmon EID 19 -- WMI EventFilter
+        Sysmon EID 20 -- WMI EventConsumer
+        Sysmon EID 21 -- WMI FilterToConsumerBinding
+        Windows Security EID 4624 -- Logon
+        Windows Security EID 4697 -- Service Installed
+        Windows Security EID 5145 -- Network Share Access
+        Windows System EID 7045  -- New Service Installed
+
+    What is the naming pattern?
+        Masquerading -- validate path and signature against known-good baseline
+        High entropy -- regex on name length and character set
+        Hardcoded    -- read source code for fixed strings
+
+    What regex encodes the pattern?
+        Build. Test against known good. Deploy.
+
+---
+
+## Attacker Naming Strategies
+
+Attackers use one of two naming approaches when deploying tools. Identifying which one shapes your detection strategy.
+
+### Masquerading
 The attacker names their artifact to blend in with legitimate system components.
 
-**Examples:**
-- svchost.exe running from C:\Windows\Temp\ instead of C:\Windows\System32\
-- A service named "Diagostic System Host" (misspelling of Diagnostic)
-- APPRUNTIME.EXE — sounds legitimate, does not exist in any Windows binary database
-
-**Detection approach:** Path validation and binary baseline comparison. The name looks legitimate — the path or signature gives it away. Cross-reference against known good databases such as Strontic xcyclopedia and the SANS Hunt Evil poster. Ask: does this binary exist here legitimately? Does its path match where Windows actually puts it?
+**Detection approach:** Path validation and binary baseline comparison. The name looks legitimate — the path or signature gives it away. Cross-reference against Strontic xcyclopedia and the SANS Hunt Evil poster.
 
 **Key rule:** svchost.exe is only legitimate from C:\Windows\System32\. Anywhere else is malicious. Full stop.
 
-### Approach 2 — High Entropy (Random Naming)
-The attacker uses programmatically generated random names — typically because the tool creates artifacts automatically without manual naming.
+### High Entropy (Random Naming)
+The attacker uses programmatically generated random names — typically because the tool creates artifacts automatically.
 
-**Examples:**
-- Service name: vmhK (4 random characters)
-- Executable name: ggWmgFMT.exe (8 random characters)
-- PsExec-style service: BTOBK (random 5-character string)
+**Detection approach:** Entropy analysis and character pattern matching. Legitimate software has human-readable names. A 4-8 character random alphanumeric string with no vendor association is a high-confidence anomaly.
 
-**Detection approach:** Entropy analysis and character pattern matching. Legitimate software has human-readable names — services, tasks, and executables from real vendors follow naming conventions. A 4-8 character random alphanumeric string with no vowel pattern and no vendor association is a high-confidence anomaly.
-
-**Regex pattern for random short service names:**
+Regex pattern for random short service names:
 
     ^[A-Za-z0-9]{4,8}$
 
-Match against service names. Filter out known-good baselines. Remaining hits warrant investigation.
-
 ---
 
-## Section 3 — The Pattern Detection Workflow
-
-### Observe → Source Code → Encode → Deploy
-
-The most durable detections come from reading attacker tool source code to find the hardcoded patterns they cannot change.
-
-**Case Study: Impacket PsExec**
-
-Impacket is an open-source Python library used by attackers to execute commands remotely via SMB. When PsExec runs, it installs a temporary service on the target host. That service name is generated by the tool.
-
-**Step 1 — Observe the behavior**
-PsExec creates a service on the remote host to execute commands. The service name should be predictable if the tool is using a fixed pattern.
-
-**Step 2 — Read the source code**
-Impacket's PsExec source (available on GitHub at fortra/impacket) generates service names using a specific character set and length. Reading the source reveals the exact pattern — it does not change between runs unless the attacker modifies the tool.
-
-**Step 3 — Encode the pattern**
-Translate the observed pattern into a regex that matches Impacket-generated service names but does not match legitimate services.
-
-Example regex for Impacket PsExec service names:
-
-    ^[A-Za-z]{4,6}(Svc)?$
-
-**Step 4 — Deploy the detection**
-Push the regex into your SIEM as a persistent detection rule against Windows System Event ID 7045 (New Service Installed). Every time a service matching this pattern is installed, an alert fires.
-
-**Why this works:** The attacker cannot easily change the pattern without modifying the tool's source code. This detection survives recompilation, hash changes, and renaming. It targets behavior, not identity.
-
----
-
-## Section 4 — Pyramid of Pain Connection
-
-Not all detections are equal. The Pyramid of Pain (David Bianco) describes the cost to the attacker when each type of indicator is detected and blocked.
+## Pyramid of Pain — Why Pattern Detections Win
 
 | Indicator Type | Cost to Attacker to Evade | Example |
 |---|---|---|
-| Hash | Trivial — recompile or change one byte | MD5 of ggWmgFMT.exe |
-| IP Address | Easy — rotate C2 infrastructure | dormaire.euwf.cn resolved IP |
-| Domain | Moderate — register new domain | dormaire.euwf.cn |
-| Network artifact | Harder — change tool behavior | Specific User-Agent string |
+| Hash | Trivial — recompile or change one byte | Binary MD5 |
+| IP Address | Easy — rotate infrastructure | C2 IP |
+| Domain | Moderate — register new domain | C2 domain |
+| Network artifact | Harder — change tool behavior | User-Agent string |
 | Host artifact | Hard — requires tool redesign | Named pipe format |
-| TTP | Very hard — change how the attack works | PsExec service install pattern |
+| TTP | Very hard — change how the attack works | Service name pattern |
 
-**Hash-based detections** are the bottom of the pyramid. The attacker recompiles their tool and the hash changes. Your detection is dead.
-
-**Pattern-based detections** hit the top of the pyramid. To evade a detection built on the Impacket service name pattern, the attacker must modify the Impacket source code, test it, and redeploy. That takes time, skill, and resources — and it only evades your one detection. All other pattern detections remain valid.
-
-**Operational implication:** IOCs (hashes, IPs, domains) belong in your blocklist and threat intel platform. Patterns belong in your SIEM as persistent detection rules. Build both, but invest detection engineering effort at the top of the pyramid.
+IOCs belong in your blocklist and threat intel platform. Patterns belong in your SIEM as persistent detection rules. Build both — but invest detection engineering effort at the top of the pyramid.
 
 ---
 
-## Section 5 — Artifact Source Reference
+## Key Lessons
 
-When encountering any new attacker tool or TTP, work through this decision tree:
+**Use the ATT&CK Navigator as a compass, not a checklist.**
+The Navigator layer provides direction. Think like the attacker first and use the Navigator to confirm your instincts.
 
-    For any tool, ask:
-    |
-    +-- What does it create?
-    |       Files, services, scheduled tasks, registry keys,
-    |       named pipes, network connections, WMI subscriptions
-    |
-    +-- Where is the telemetry?
-    |       Sysmon EID 1  -- Process Creation
-    |       Sysmon EID 3  -- Network Connection
-    |       Sysmon EID 11 -- File Creation
-    |       Sysmon EID 13 -- Registry Value Set
-    |       Sysmon EID 17 -- Pipe Created
-    |       Sysmon EID 18 -- Pipe Connected
-    |       Sysmon EID 19 -- WMI EventFilter
-    |       Sysmon EID 20 -- WMI EventConsumer
-    |       Sysmon EID 21 -- WMI FilterToConsumerBinding
-    |       Windows Security EID 4624 -- Logon
-    |       Windows Security EID 4697 -- Service Installed
-    |       Windows Security EID 5145 -- Network Share Access
-    |       Windows System EID 7045  -- New Service Installed
-    |
-    +-- What is the naming pattern?
-    |       Masquerading -- validate path and signature
-    |       High entropy -- regex on name length and character set
-    |       Hardcoded    -- read source code for fixed strings
-    |
-    +-- What regex encodes the pattern?
-            Build. Test against known good. Deploy.
+**Attackers move iteratively — your hunt should too.**
+Land, establish persistence, enumerate, identify next target, move laterally. Recognizing this pattern lets you anticipate the next phase before you find it.
+
+**Offensive training translates directly to defensive hunting.**
+PJPT methodology and attacker mindset are force multipliers for hypothesis generation. The question "What would I do next?" is not a thought experiment — it is an investigative technique.
+
+**Splunk and Kansa together provide the complete picture.**
+Splunk proves what happened. Kansa proves what remains. Volatile artifacts like DNS cache and Netstat must be collected during the incident — not after.
+
+**The phased approach writes the report.**
+Breaking the investigation into chronological phases with hypothesis, query, findings, and analysis for each phase means the report writes itself. Understanding each phase deeply makes documentation natural, not forced.
 
 ---
 
-## Section 6 — Detection Templates
+## The One-Sentence Test
 
-### Splunk SPL — New Service with High-Entropy Name
-
-Detects services installed with short random-looking names — consistent with PsExec, RemCom, and similar tools.
-
-    index=wineventlog sourcetype=WinEventLog:System EventCode=7045
-    | rex field=Message "Service Name:\s+(?<ServiceName>[^\r\n]+)"
-    | eval name_length=len(ServiceName)
-    | where name_length <= 8
-    | regex ServiceName="^[A-Za-z0-9]{4,8}$"
-    | table _time, ComputerName, ServiceName, Message
-    | sort -_time
-
-### Splunk SPL — svchost.exe Outside System32
-
-Detects masquerading — svchost running from any path other than its legitimate location.
-
-    index=sysmon EventCode=1
-    | where process_name="svchost.exe"
-    | where NOT match(process_path, "(?i)C:\\Windows\\System32\\svchost\.exe")
-    | table _time, ComputerName, process_path, parent_process, CommandLine
-    | sort -_time
-
-### Sigma Rule — Impacket PsExec Service Pattern
-
-    title: Impacket PsExec Service Name Pattern
-    id: a1b2c3d4-0000-0000-0000-000000000001
-    status: experimental
-    description: Detects service installation matching Impacket PsExec naming pattern
-    references:
-      - https://github.com/fortra/impacket
-    author: Bea Hodson
-    date: 2026/05
-    tags:
-      - attack.lateral_movement
-      - attack.t1021.002
-      - attack.execution
-      - attack.t1569.002
-    logsource:
-      product: windows
-      service: system
-    detection:
-      selection:
-        EventID: 7045
-        ServiceName|re: '^[A-Za-z]{4,6}(Svc)?$'
-      condition: selection
-    falsepositives:
-      - Legitimate software with short service names — validate against environment baseline
-    level: high
-
-### Sigma Rule — svchost Masquerading
-
-    title: svchost.exe Masquerading — Non-Standard Path
-    id: a1b2c3d4-0000-0000-0000-000000000002
-    status: stable
-    description: Detects svchost.exe executing from any path other than System32
-    references:
-      - https://attack.mitre.org/techniques/T1036/
-    author: Bea Hodson
-    date: 2026/05
-    tags:
-      - attack.defense_evasion
-      - attack.t1036
-    logsource:
-      product: windows
-      category: process_creation
-    detection:
-      selection:
-        Image|endswith: '\svchost.exe'
-      filter_legitimate:
-        Image: 'C:\Windows\System32\svchost.exe'
-      condition: selection and not filter_legitimate
-    falsepositives:
-      - None expected — svchost.exe has no legitimate reason to run outside System32
-    level: critical
-
----
-
-## Quick Reference — The One-Sentence Test
-
-Before building any detection, answer this question:
+Before building any detection or forming any hypothesis, answer this:
 
 **"What artifact does this tool leave, where does that artifact appear in my telemetry, and what pattern distinguishes it from legitimate activity?"**
 
-If you can answer all three parts, you can build the detection. If you cannot, go back to the source — tool documentation, source code, sandbox analysis, or threat reports — until you can.
+If you can answer all three parts, you can build the detection. If you cannot, go back to the source — threat intelligence, tool documentation, source code, or sandbox analysis — until you can.
 
 ---
 
