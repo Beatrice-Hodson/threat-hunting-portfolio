@@ -4,7 +4,7 @@
 
 ---
 
-> "It is not enough to have a framework or a checklist. Alone, these produce mediocre hypotheses at best. It is the ability to think like the attacker at each stage of the intrusion that allows the defender to retrace the attacker's steps with higher certainty. The essential question, 'What would I do next if I were them?', backed by specific threat intelligence, is what generates the strong hypotheses needed to trace the entirety of the attack chain."
+> "It is not enough to have a framework or a checklist. Alone, these produce mediocre hypotheses at best. It is the ability to think like the attacker at each stage of the intrusion that allows the defender to retrace the attack with higher certainty. The essential question, 'What would I do next if I were them?', backed by specific threat intelligence, is what generates the strong hypotheses needed to trace the entirety of the attack chain."
 > — Bea Hodson
 
 ---
