@@ -1,0 +1,4 @@
+baseline_activity:
+  description: "Normal SMB office activity across HQ and branch - accounting software, email, file shares, light web browsing"
+  intensity: medium
+  variation: medium

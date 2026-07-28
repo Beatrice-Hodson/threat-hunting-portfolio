@@ -1,0 +1,28 @@
+includes:
+  - ../organizations/meridian-partners/includes/environment.yaml
+  - ../organizations/meridian-partners/includes/baseline.yaml
+
+version: "1.0"
+name: tier1-baseline
+description: |
+  Tier 1 training scenario: no injected attack. Pure baseline traffic across
+  Meridian Partners (HQ + branch). Goal: learn what "normal" looks like in this
+  org before hunting anything - establish a mental baseline for volume, timing,
+  and typical process/logon patterns per persona.
+
+time_window:
+  start: "2026-03-02T00:00:00Z"
+  duration: "24h"
+  warmup: "8h"
+
+output:
+  logs:
+    - format: windows
+    - format: zeek
+    - format: ecar
+    - format: syslog
+    - format: bash_history
+    - format: snort_alert
+    - format: cisco_asa
+    - format: proxy_access
+  destination: ./output

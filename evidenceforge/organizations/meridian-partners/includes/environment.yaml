@@ -1,0 +1,552 @@
+environment:
+  description: Meridian Partners - SMB professional services firm (accounting/consulting), HQ in Draper,
+    UT + branch office in St. George, UT. Mostly Windows with a small Linux DMZ/proxy footprint. Modeled
+    as a Huntress/Arctic-Wolf-style managed-services client environment for recurring threat hunting exercises.
+  timezone:
+    default: America/Denver
+  users:
+  - username: dana.whitfield
+    full_name: Dana Whitfield
+    email: dana_whitfield@meridianpartners.example
+    groups:
+    - hq
+    - executive
+    persona: executive
+    primary_system: WS-HQ-01
+  - username: marcus.tan
+    full_name: Marcus Tan
+    email: marcus_tan@meridianpartners.example
+    groups:
+    - hq
+    - executive
+    persona: executive
+    primary_system: WS-HQ-02
+  - username: priya.nair
+    full_name: Priya Nair
+    email: priya_nair@meridianpartners.example
+    groups:
+    - hq
+    - accountant
+    persona: accountant
+    primary_system: WS-HQ-03
+  - username: owen.brasch
+    full_name: Owen Brasch
+    email: owen_brasch@meridianpartners.example
+    groups:
+    - hq
+    - accountant
+    persona: accountant
+    primary_system: WS-HQ-04
+  - username: celia.doyle
+    full_name: Celia Doyle
+    email: celia_doyle@meridianpartners.example
+    groups:
+    - hq
+    - accountant
+    persona: accountant
+    primary_system: WS-HQ-05
+  - username: greg.holloway
+    full_name: Greg Holloway
+    email: greg_holloway@meridianpartners.example
+    groups:
+    - hq
+    - hr
+    persona: hr
+    primary_system: WS-HQ-06
+  - username: renee.abara
+    full_name: Renee Abara
+    email: renee_abara@meridianpartners.example
+    groups:
+    - hq
+    - hr
+    persona: hr
+    primary_system: WS-HQ-07
+  - username: tyler.mackay
+    full_name: Tyler Mackay
+    email: tyler_mackay@meridianpartners.example
+    groups:
+    - hq
+    - sales
+    persona: sales
+    primary_system: WS-HQ-08
+  - username: brianna.solis
+    full_name: Brianna Solis
+    email: brianna_solis@meridianpartners.example
+    groups:
+    - hq
+    - sales
+    persona: sales
+    primary_system: WS-HQ-09
+  - username: devon.frick
+    full_name: Devon Frick
+    email: devon_frick@meridianpartners.example
+    groups:
+    - hq
+    - sales
+    persona: sales
+    primary_system: WS-HQ-10
+  - username: kayla.ingram
+    full_name: Kayla Ingram
+    email: kayla_ingram@meridianpartners.example
+    groups:
+    - hq
+    - sales
+    persona: sales
+    primary_system: WS-HQ-11
+  - username: noah.fenwick
+    full_name: Noah Fenwick
+    email: noah_fenwick@meridianpartners.example
+    groups:
+    - hq
+    - marketing
+    persona: marketing
+    primary_system: WS-HQ-12
+  - username: julia.rousseau
+    full_name: Julia Rousseau
+    email: julia_rousseau@meridianpartners.example
+    groups:
+    - hq
+    - marketing
+    persona: marketing
+    primary_system: WS-HQ-13
+  - username: sam.oduya
+    full_name: Sam Oduya
+    email: sam_oduya@meridianpartners.example
+    groups:
+    - hq
+    - project_manager
+    persona: project_manager
+    primary_system: WS-HQ-14
+  - username: erin.paquette
+    full_name: Erin Paquette
+    email: erin_paquette@meridianpartners.example
+    groups:
+    - hq
+    - project_manager
+    persona: project_manager
+    primary_system: WS-HQ-15
+  - username: felix.granger
+    full_name: Felix Granger
+    email: felix_granger@meridianpartners.example
+    groups:
+    - hq
+    - project_manager
+    persona: project_manager
+    primary_system: WS-HQ-16
+  - username: alina.moss
+    full_name: Alina Moss
+    email: alina_moss@meridianpartners.example
+    groups:
+    - hq
+    - legal_counsel
+    persona: legal_counsel
+    primary_system: WS-HQ-17
+  - username: victor.crane
+    full_name: Victor Crane
+    email: victor_crane@meridianpartners.example
+    groups:
+    - hq
+    - legal_counsel
+    persona: legal_counsel
+    primary_system: WS-HQ-18
+  - username: wade.thistle
+    full_name: Wade Thistle
+    email: wade_thistle@meridianpartners.example
+    groups:
+    - hq
+    - sysadmin
+    persona: sysadmin
+    primary_system: WS-HQ-19
+  - username: lucas.venn
+    full_name: Lucas Venn
+    email: lucas_venn@meridianpartners.example
+    groups:
+    - hq
+    - help_desk
+    persona: help_desk
+    primary_system: WS-HQ-20
+  - username: morgan.betancourt
+    full_name: Morgan Betancourt
+    email: morgan_betancourt@meridianpartners.example
+    groups:
+    - hq
+    - receptionist
+    persona: receptionist
+    primary_system: WS-HQ-21
+  - username: ivy.sconce
+    full_name: Ivy Sconce
+    email: ivy_sconce@meridianpartners.example
+    groups:
+    - hq
+    - receptionist
+    persona: receptionist
+    primary_system: WS-HQ-22
+  - username: theo.ridgeway
+    full_name: Theo Ridgeway
+    email: theo_ridgeway@meridianpartners.example
+    groups:
+    - hq
+    - intern
+    persona: intern
+    primary_system: WS-HQ-23
+  - username: paige.armistead
+    full_name: Paige Armistead
+    email: paige_armistead@meridianpartners.example
+    groups:
+    - branch
+    - project_manager
+    persona: project_manager
+    primary_system: WS-BR-01
+  - username: cole.durrant
+    full_name: Cole Durrant
+    email: cole_durrant@meridianpartners.example
+    groups:
+    - branch
+    - accountant
+    persona: accountant
+    primary_system: WS-BR-02
+  - username: nadia.chevalier
+    full_name: Nadia Chevalier
+    email: nadia_chevalier@meridianpartners.example
+    groups:
+    - branch
+    - accountant
+    persona: accountant
+    primary_system: WS-BR-03
+  - username: hunter.blaise
+    full_name: Hunter Blaise
+    email: hunter_blaise@meridianpartners.example
+    groups:
+    - branch
+    - accountant
+    persona: accountant
+    primary_system: WS-BR-04
+  - username: simone.aldrich
+    full_name: Simone Aldrich
+    email: simone_aldrich@meridianpartners.example
+    groups:
+    - branch
+    - sales
+    persona: sales
+    primary_system: WS-BR-05
+  - username: dario.plessis
+    full_name: Dario Plessis
+    email: dario_plessis@meridianpartners.example
+    groups:
+    - branch
+    - sales
+    persona: sales
+    primary_system: WS-BR-06
+  - username: faye.underhill
+    full_name: Faye Underhill
+    email: faye_underhill@meridianpartners.example
+    groups:
+    - branch
+    - receptionist
+    persona: receptionist
+    primary_system: WS-BR-07
+  - username: miles.corwin
+    full_name: Miles Corwin
+    email: miles_corwin@meridianpartners.example
+    groups:
+    - branch
+    - help_desk
+    persona: help_desk
+    primary_system: WS-BR-08
+  systems:
+  - hostname: WS-HQ-01
+    ip: 10.10.1.11
+    os: Windows 11
+    type: workstation
+    assigned_user: dana.whitfield
+  - hostname: WS-HQ-02
+    ip: 10.10.1.12
+    os: Windows 11
+    type: workstation
+    assigned_user: marcus.tan
+  - hostname: WS-HQ-03
+    ip: 10.10.1.13
+    os: Windows 11
+    type: workstation
+    assigned_user: priya.nair
+  - hostname: WS-HQ-04
+    ip: 10.10.1.14
+    os: Windows 11
+    type: workstation
+    assigned_user: owen.brasch
+  - hostname: WS-HQ-05
+    ip: 10.10.1.15
+    os: Windows 11
+    type: workstation
+    assigned_user: celia.doyle
+  - hostname: WS-HQ-06
+    ip: 10.10.1.16
+    os: Windows 11
+    type: workstation
+    assigned_user: greg.holloway
+  - hostname: WS-HQ-07
+    ip: 10.10.1.17
+    os: Windows 11
+    type: workstation
+    assigned_user: renee.abara
+  - hostname: WS-HQ-08
+    ip: 10.10.1.18
+    os: Windows 11
+    type: workstation
+    assigned_user: tyler.mackay
+  - hostname: WS-HQ-09
+    ip: 10.10.1.19
+    os: Windows 11
+    type: workstation
+    assigned_user: brianna.solis
+  - hostname: WS-HQ-10
+    ip: 10.10.1.20
+    os: Windows 11
+    type: workstation
+    assigned_user: devon.frick
+  - hostname: WS-HQ-11
+    ip: 10.10.1.21
+    os: Windows 11
+    type: workstation
+    assigned_user: kayla.ingram
+  - hostname: WS-HQ-12
+    ip: 10.10.1.22
+    os: Windows 11
+    type: workstation
+    assigned_user: noah.fenwick
+  - hostname: WS-HQ-13
+    ip: 10.10.1.23
+    os: Windows 11
+    type: workstation
+    assigned_user: julia.rousseau
+  - hostname: WS-HQ-14
+    ip: 10.10.1.24
+    os: Windows 11
+    type: workstation
+    assigned_user: sam.oduya
+  - hostname: WS-HQ-15
+    ip: 10.10.1.25
+    os: Windows 11
+    type: workstation
+    assigned_user: erin.paquette
+  - hostname: WS-HQ-16
+    ip: 10.10.1.26
+    os: Windows 11
+    type: workstation
+    assigned_user: felix.granger
+  - hostname: WS-HQ-17
+    ip: 10.10.1.27
+    os: Windows 11
+    type: workstation
+    assigned_user: alina.moss
+  - hostname: WS-HQ-18
+    ip: 10.10.1.28
+    os: Windows 11
+    type: workstation
+    assigned_user: victor.crane
+  - hostname: WS-HQ-19
+    ip: 10.10.1.29
+    os: Windows 11
+    type: workstation
+    assigned_user: wade.thistle
+  - hostname: WS-HQ-20
+    ip: 10.10.1.30
+    os: Windows 11
+    type: workstation
+    assigned_user: lucas.venn
+  - hostname: WS-HQ-21
+    ip: 10.10.1.31
+    os: Windows 11
+    type: workstation
+    assigned_user: morgan.betancourt
+  - hostname: WS-HQ-22
+    ip: 10.10.1.32
+    os: Windows 11
+    type: workstation
+    assigned_user: ivy.sconce
+  - hostname: WS-HQ-23
+    ip: 10.10.1.33
+    os: Windows 11
+    type: workstation
+    assigned_user: theo.ridgeway
+  - hostname: WS-BR-01
+    ip: 10.20.1.11
+    os: Windows 11
+    type: workstation
+    assigned_user: paige.armistead
+  - hostname: WS-BR-02
+    ip: 10.20.1.12
+    os: Windows 11
+    type: workstation
+    assigned_user: cole.durrant
+  - hostname: WS-BR-03
+    ip: 10.20.1.13
+    os: Windows 11
+    type: workstation
+    assigned_user: nadia.chevalier
+  - hostname: WS-BR-04
+    ip: 10.20.1.14
+    os: Windows 11
+    type: workstation
+    assigned_user: hunter.blaise
+  - hostname: WS-BR-05
+    ip: 10.20.1.15
+    os: Windows 11
+    type: workstation
+    assigned_user: simone.aldrich
+  - hostname: WS-BR-06
+    ip: 10.20.1.16
+    os: Windows 11
+    type: workstation
+    assigned_user: dario.plessis
+  - hostname: WS-BR-07
+    ip: 10.20.1.17
+    os: Windows 11
+    type: workstation
+    assigned_user: faye.underhill
+  - hostname: WS-BR-08
+    ip: 10.20.1.18
+    os: Windows 11
+    type: workstation
+    assigned_user: miles.corwin
+  - hostname: DC-HQ-01
+    ip: 10.10.2.10
+    os: Windows Server 2022
+    type: domain_controller
+    roles:
+    - domain_controller
+    - dns_server
+  - hostname: FILE-HQ-01
+    ip: 10.10.2.11
+    os: Windows Server 2022
+    type: server
+    roles:
+    - file_server
+  - hostname: APP-HQ-01
+    ip: 10.10.2.12
+    os: Windows Server 2022
+    type: server
+    roles:
+    - database
+    services:
+    - mssql
+    - quickbooks_enterprise
+  - hostname: WEB-DMZ-01
+    ip: 10.10.3.10
+    os: Ubuntu 22.04
+    type: server
+    roles:
+    - web_server
+    services:
+    - nginx
+    - https
+  - hostname: PROXY-HQ-01
+    ip: 10.10.2.13
+    os: Ubuntu 22.04
+    type: server
+    roles:
+    - forward_proxy
+    services:
+    - squid
+  - hostname: FILE-BR-01
+    ip: 10.20.1.30
+    os: Windows Server 2022
+    type: server
+    roles:
+    - file_server
+  network:
+    segments:
+    - name: hq_workstations
+      cidr: 10.10.1.0/24
+      exposure: internal
+    - name: hq_servers
+      cidr: 10.10.2.0/24
+      exposure: internal
+    - name: dmz
+      cidr: 10.10.3.0/24
+      exposure: both
+    - name: branch
+      cidr: 10.20.1.0/24
+      exposure: internal
+    sensors:
+    - type: network
+      name: core-tap
+      hostname: ZEEK-CORE
+      monitoring_segments:
+      - hq_workstations
+      - hq_servers
+      - branch
+      direction: bidirectional
+      placement: span
+      log_formats:
+      - zeek
+    - type: network
+      name: dmz-tap
+      hostname: ZEEK-DMZ
+      monitoring_segments:
+      - dmz
+      direction: bidirectional
+      placement: span
+      log_formats:
+      - zeek
+    - type: ids
+      name: ids-edge
+      hostname: IDS-EDGE
+      monitoring_segments:
+      - dmz
+      direction: bidirectional
+      placement: tap
+      log_formats:
+      - snort_alert
+    - type: firewall
+      name: fw-edge
+      hostname: FW-EDGE
+      monitoring_segments:
+      - hq_workstations
+      - hq_servers
+      - dmz
+      - branch
+      direction: bidirectional
+      placement: tap
+      log_formats:
+      - cisco_asa
+      interfaces:
+        hq_workstations: inside
+        hq_servers: inside
+        branch: inside
+        dmz: dmz
+      default_action: deny
+      deny_ratio: 5.0
+      threat_detection_rate: 10
+      nat_rules:
+      - type: dynamic_pat
+        src:
+        - hq_workstations
+        - hq_servers
+        - branch
+        mapped_ip: 45.61.200.1
+      - type: static
+        real_ip: 10.10.3.10
+        mapped_ip: 45.61.200.10
+      policy:
+      - src: external
+        dst: dmz
+        ports:
+        - 80
+        - 443
+      - src: hq_workstations
+        dst: any
+      - src: branch
+        dst: any
+      - src: hq_servers
+        dst: external
+        ports:
+        - 80
+        - 443
+        - 53
+      - src: hq_servers
+        dst: hq_servers
+    public_cidrs:
+    - 45.61.200.0/28
+  proxy:
+    mode: explicit
