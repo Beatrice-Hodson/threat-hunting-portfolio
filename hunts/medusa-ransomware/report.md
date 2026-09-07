@@ -72,7 +72,7 @@ Two infrastructure gaps were also identified and resolved in the course of this 
 *(Third-party research screenshots, used to support a Finding where the technique could not be reproduced in this lab.)*
 
 ### Figure R1: Web Shell (cmd.aspx) — Source: Unit 42
-*[Screenshot]*
+![Figure R1 - Unit 42 cmd.aspx Web Shell Example](screenshots/Unit42-cmd.aspx-file.png)
 
 **Caption:** Example of the cmd.aspx webshell used by Medusa operators following exploitation of a Microsoft Exchange Server.
 
