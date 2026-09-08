@@ -51,12 +51,12 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 *(Your own lab work — Atomic Red Team execution, Sysmon events, Wazuh queries/alerts.)*
 
 ### Figure 1a: T1505.003 — Atomic Red Team Execution
-*[Screenshot: PowerShell terminal showing `Invoke-AtomicTest T1505.003`, the file-copy output, and exit code 0]*
+![Figure 1a - Atomic Red Team Execution](screenshots/figure1a-atomic-execution.png)
 
 **Caption:** Atomic Red Team test T1505.003-1 (Web Shell Written to Disk) executed on the Windows 11 victim host, copying cmd.aspx, b.jsp, and tests.jsp into `C:\inetpub\wwwroot` via xcopy.exe.
 
 ### Figure 1b: T1505.003 — Web Shell File Creation Detected
-*[Screenshot: Wazuh Discover, wazuh-alerts-* index, showing the cmd.aspx event with columns agent.name, agent.ip, data.win.system.eventID, data.win.eventdata.image, data.win.eventdata.targetFilename, data.win.eventdata.user, data.win.system.severityValue, rule.level, rule.mitre.id, rule.mitre.technique]
+![Figure 1b - Wazuh Alert](screenshots/figure1b-wazuh-alert.png)
 
 **Caption:** Wazuh Discover view showing the custom rule (ID 100001) firing at rule.level 15 against a Sysmon Event ID 11 (FileCreate) for cmd.aspx written to C:\inetpub\wwwroot by xcopy.exe under the Analyst\Beatrice account.
 
@@ -94,7 +94,7 @@ Given this Sysmon limitation, detection was deliberately built on **Event ID 1 (
 *(Third-party research screenshots, used to support a Finding where the technique could not be reproduced in this lab.)*
 
 ### Figure R1: Web Shell (cmd.aspx) — Source: Unit 42
-*[Screenshot]*
+![Figure R1 - Unit 42 cmd.aspx Web Shell Example](screenshots/Unit42-cmd.aspx-file.png)
 
 **Caption:** Example of the cmd.aspx webshell used by Medusa operators following exploitation of a Microsoft Exchange Server.
 
