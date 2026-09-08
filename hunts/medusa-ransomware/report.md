@@ -1,4 +1,4 @@
-﻿# Threat Hunt Technical Report: Medusa Ransomware (RaaS)
+# Threat Hunt Technical Report: Medusa Ransomware (RaaS)
 
 **Author:** Bea Hodson
 **Date:** [fill in]
@@ -30,7 +30,7 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 |---|---|---|---|---|---|---|---|
 | Initial Access | Exploit Public-Facing Application | T1190 | Medusa targeted public facing web application weaknesses. | Medusa gained access through a Microsoft Exchange Server vulnerability by modifying the ASPX file and uploading a webshell (cmd.aspx). | CISA Advisory, MITRE Group Page, Unit 42 | TBD | Not Emulated — lab lacks a vulnerable public-facing Exchange server |
 | Persistence | Web Shell | T1505.003 | Medusa established persistence using a webshell. | Medusa was observed uploading the cmd.aspx web shell to the compromised Exchange server. This provides a persistent backdoor as long as the web shell is present. | Unit 42 | Y (T1505.003-1: Web Shell Written to Disk) | Emulated — the file-drop mechanism of a cmd.aspx web shell was reproduced via Atomic Red Team, independent of the original Exchange exploit vector, which remains Not Emulated. |
-| Execution | BITS Jobs | T1197 | | | | | |
+| Execution | BITS Jobs | T1197 | Having gained a foothold, Medusa delivered additional tools using native Windows utilities, consistent with their LOL strategy. | Medusa was observed using PowerShell to invoke a bitsadmin transfer, downloading a compressed file (baby.zip) containing ConnectWise from a file hosting site (filemail.com). | Unit 42, MITRE Group Page | Y (T1197-2: Bitsadmin Download (PowerShell)) | Emulated — see Detection Engineering for a notable data-visibility limitation discovered during this hunt. |
 | Command and Control | Remote Desktop Software | T1219.002 | | | | | |
 
 ---
@@ -42,6 +42,7 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 | Stage | Technique | ID | Figure Ref | Key Observation |
 |---|---|---|---|---|
 | Persistence | Web Shell | T1505.003 | Figures 1a, 1b | Atomic Red Team (T1505.003-1) wrote cmd.aspx to `C:\inetpub\wwwroot` via xcopy.exe. Sysmon Event ID 11 (FileCreate) captured the event and forwarded it to Wazuh. No existing Wazuh rule matched this event — a custom detection rule (ID 100001) was written to close the gap. See Detection Engineering section below. |
+| Execution | BITS Jobs | T1197 | Figures 2a, 2b, 2c | Atomic Red Team (T1197-2) ran `Start-BitsTransfer` via PowerShell to download a file to `$env:TEMP`. Sysmon's Event ID 11 never captured the final filename — BITS downloads via a temporary, randomly-named file and completes with a rename, which Sysmon does not log. Windows' native BITS-Client operational log (`Microsoft-Windows-Bits-Client/Operational`) provided full visibility where Sysmon could not. A custom detection rule (ID 100002) built on process creation (Event ID 1) and `ParentCommandLine` content — rather than file creation — was written to close the gap, and correctly fired after a regex fix (see Detection Engineering). |
 
 ---
 
@@ -50,12 +51,12 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 *(Your own lab work — Atomic Red Team execution, Sysmon events, Wazuh queries/alerts.)*
 
 ### Figure 1a: T1505.003 — Atomic Red Team Execution
-![Figure 1a - Atomic Red Team Execution](screenshots/figure1a-atomic-execution.png)
+*[Screenshot: PowerShell terminal showing `Invoke-AtomicTest T1505.003`, the file-copy output, and exit code 0]*
 
 **Caption:** Atomic Red Team test T1505.003-1 (Web Shell Written to Disk) executed on the Windows 11 victim host, copying cmd.aspx, b.jsp, and tests.jsp into `C:\inetpub\wwwroot` via xcopy.exe.
 
 ### Figure 1b: T1505.003 — Web Shell File Creation Detected
-![Figure 1b - Wazuh Alert](screenshots/figure1b-wazuh-alert.png)
+*[Screenshot: Wazuh Discover, wazuh-alerts-* index, showing the cmd.aspx event with columns agent.name, agent.ip, data.win.system.eventID, data.win.eventdata.image, data.win.eventdata.targetFilename, data.win.eventdata.user, data.win.system.severityValue, rule.level, rule.mitre.id, rule.mitre.technique]
 
 **Caption:** Wazuh Discover view showing the custom rule (ID 100001) firing at rule.level 15 against a Sysmon Event ID 11 (FileCreate) for cmd.aspx written to C:\inetpub\wwwroot by xcopy.exe under the Analyst\Beatrice account.
 
@@ -65,6 +66,27 @@ One notable troubleshooting finding during this process: the Atomic test's file-
 
 Two infrastructure gaps were also identified and resolved in the course of this hunt: (1) the Wazuh agent's `ossec.conf` was never configured with an `<eventchannel>` block for `Microsoft-Windows-Sysmon/Operational`, meaning Sysmon telemetry was never forwarded to the SIEM despite the agent showing Active; and (2) following a full manager rebuild for the live-agent architecture, the `wazuh-archives-*` index and its supporting filebeat configuration (`setup.ilm.enabled`, `archives.enabled`) reset to defaults and had to be reapplied.
 
+### Figure 2a: T1197 — Atomic Red Team Execution
+![Figure 2a - Atomic Red Team Execution](screenshots/figure2a-atomic-execution.png)
+
+**Caption:** Atomic Red Team test T1197-2 (Bitsadmin Download - PowerShell) executed on the Windows 11 victim host, invoking `Start-BitsTransfer` to download a file to `$env:TEMP\bitsadmin2_flag.ps1`.
+
+### Figure 2b: T1197 — BITS-Client Operational Log
+![Figure 2b - BITS-Client Log](screenshots/figure2b-bits-client-log.png)
+
+**Caption:** Windows' native `Microsoft-Windows-Bits-Client/Operational` log showing the transfer job started and completed against the true source URL — the data source that provided visibility where Sysmon's FileCreate event did not.
+
+### Figure 2c: T1197 — Custom Rule Detection
+![Figure 2c - Wazuh Alert](screenshots/figure2c-wazuh-alert.png)
+
+**Caption:** Wazuh Discover view showing custom rule 100002 firing at rule.level 12 against the Sysmon Event ID 1 (ProcessCreate) event, matching on `ParentCommandLine` containing both a BITS invocation term and a Temp-directory reference.
+
+**Narrative:** Atomic Red Team test T1197-2 was executed, invoking PowerShell's `Start-BitsTransfer` cmdlet to download a file to the user's Temp directory. `Test-Path` confirmed the target file existed on disk, but extensive hunting across multiple time windows found no Sysmon Event ID 11 (FileCreate) for the final filename. Cross-referencing Sysmon/BITS documentation confirmed the cause: BITS downloads to a randomly-named temporary file (`BITS[random].tmp`) and completes the transfer via a rename operation — Sysmon does not log file renames, only `CreateFile` calls, so the final artifact's creation is invisible to this specific sensor by design, not misconfiguration.
+
+Windows' own native BITS-Client operational log (`Microsoft-Windows-Bits-Client/Operational`) was checked as an alternative data source and provided complete visibility: transfer-started and transfer-complete events, tied to the true source URL, with full fidelity.
+
+Given this Sysmon limitation, detection was deliberately built on **Event ID 1 (ProcessCreate)** and the `ParentCommandLine` field rather than file creation — catching the *invocation* of BITS rather than trying to observe its output on disk. An initial version of the rule failed to fire because the command line captured by Sysmon contained the literal, unexpanded environment variable reference `$env:TEMP`, not the resolved path (`C:\Users\...\AppData\Local\Temp\...`) — a real-world nuance, since attackers commonly use environment variables specifically because they are portable across victim usernames. The rule pattern was corrected to match the variable reference directly. `wazuh-logtest` could not be used to validate this rule during development, since manually-constructed JSON test events cannot recreate the internal message format Wazuh's `eventchannel` log source produces, meaning validation had to be performed against live, re-triggered telemetry instead.
+
 ---
 
 ## Appendix B: Reference Artifacts (External Sources)
@@ -72,7 +94,7 @@ Two infrastructure gaps were also identified and resolved in the course of this 
 *(Third-party research screenshots, used to support a Finding where the technique could not be reproduced in this lab.)*
 
 ### Figure R1: Web Shell (cmd.aspx) — Source: Unit 42
-![Figure R1 - Unit 42 cmd.aspx Web Shell Example](screenshots/Unit42-cmd.aspx-file.png)
+*[Screenshot]*
 
 **Caption:** Example of the cmd.aspx webshell used by Medusa operators following exploitation of a Microsoft Exchange Server.
 
@@ -110,6 +132,38 @@ During the T1505.003 hunt, the cmd.aspx file-creation event was confirmed presen
 - **Severity level 15 (Wazuh's maximum)** — chosen because a file matching this pattern represents immediate, persistent, remotely-accessible code execution on an internet-facing asset the moment it lands, which is more severe than a generic temp-folder drop (the closest comparable vendor rule, `92213`, sits at 15 for a less specific scenario).
 - **Scope kept intentionally broad** — the rule does not restrict by originating process, only by target path and extension. This was a deliberate choice to avoid missing true positives during initial deployment; if alert volume proves excessive in a production environment, the rule can be narrowed to specific processes (e.g., excluding known-legitimate deployment tooling) once real baseline traffic is available for tuning. This lab has no legitimate deployment activity to tune against, so an allow-list approach was not attempted here — noted as a limitation.
 - **Note on severity fields:** Sysmon's own `severityValue` field remains "INFORMATION" on the resulting event regardless of this rule — that field reflects Sysmon's static event-type classification, not risk. The elevated `rule.level: 15` is Wazuh's analyst-driven severity assessment, layered on top of the raw telemetry. This distinction — raw event classification vs. detection-engineered severity — is itself a useful thing to understand when reading SIEM output.
+
+---
+
+## Detection Engineering: Custom Rule (T1197)
+
+Unlike T1505.003, this technique could not be reliably detected via file creation telemetry. Extensive hunting confirmed Sysmon does not log the final filename of a BITS-delivered file, because BITS downloads to a temporary staging file and completes via a rename — an operation Sysmon's FileCreate event does not capture. Detection was instead built on the moment of invocation.
+
+**Rule location:** `/var/ossec/etc/rules/local_rules.xml`, in a second rule group scoped to `sysmon_eid1_detections` (kept separate from the T1505.003 FileCreate group, since this rule operates on a different Sysmon event type and group)
+
+**Rule ID:** `100002`
+
+```xml
+<group name="sysmon,sysmon_eid1_detections,windows,">
+  <rule id="100002" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.parentCommandLine" type="pcre2">(?i)(Start-BitsTransfer|bitsadmin)</field>
+    <field name="win.eventdata.parentCommandLine" type="pcre2">(?i)(AppData\\\\Local\\\\Temp|\$env:TEMP|%TEMP%)</field>
+    <options>no_full_log</options>
+    <description>Possible malicious BITS transfer to user Temp directory: $(win.eventdata.parentCommandLine)</description>
+    <mitre>
+      <id>T1197</id>
+    </mitre>
+  </rule>
+</group>
+```
+
+**Design decisions:**
+- **Detection point moved upstream, from file creation to process creation.** Since the final artifact's creation is invisible to Sysmon by design (see narrative above), a rule built on `TargetFilename` would never reliably fire for this technique. Catching the *invocation* of BITS via `ParentCommandLine` is more robust — it doesn't depend on file-write visibility at all, and fires the moment the command is issued rather than after a transfer completes.
+- **Two `<field>` conditions, both required (implicit AND).** A BITS invocation alone is common and legitimate — Windows Update, SCCM, and various software updaters all use it routinely, downloading to system-managed locations. Requiring the command line to *also* reference a user's Temp directory narrows the rule to a genuinely unusual combination: BITS being used to stage a file somewhere a legitimate deployment tool would not.
+- **Destination path over source domain.** An earlier design option considered matching against known-malicious source domains, but this was rejected as fragile — attacker infrastructure changes constantly, while writing to a user-writable Temp directory (rather than a system-managed path) is a more durable behavioral signal.
+- **Environment variable matching, not just literal paths.** The first version of this rule matched only the literal expanded path (`AppData\Local\Temp`) and failed to fire, because Sysmon captured the command line exactly as typed — `$env:TEMP`, an unresolved variable reference. The pattern was corrected to match the variable syntax directly (`\$env:TEMP`, `%TEMP%`) alongside the expanded path. This is a meaningful real-world consideration: attackers commonly use environment variables specifically because they resolve correctly regardless of the victim's username, making literal-path-only detection logic unreliable against portable attacker scripts.
+- **Severity level 12**, one level below the T1505.003 rule's 15 — reasoning being a BITS-to-Temp invocation is a strong staging indicator but, unlike a live web shell already dropped in an internet-facing web root, does not by itself confirm a completed, persistent compromise.
 
 ---
 
