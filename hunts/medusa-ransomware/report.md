@@ -31,7 +31,8 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 | Initial Access | Exploit Public-Facing Application | T1190 | Medusa targeted public facing web application weaknesses. | Medusa gained access through a Microsoft Exchange Server vulnerability by modifying the ASPX file and uploading a webshell (cmd.aspx). | CISA Advisory, MITRE Group Page, Unit 42 | TBD | Not Emulated — lab lacks a vulnerable public-facing Exchange server |
 | Persistence | Web Shell | T1505.003 | Medusa established persistence using a webshell. | Medusa was observed uploading the cmd.aspx web shell to the compromised Exchange server. This provides a persistent backdoor as long as the web shell is present. | Unit 42 | Y (T1505.003-1: Web Shell Written to Disk) | Emulated — the file-drop mechanism of a cmd.aspx web shell was reproduced via Atomic Red Team, independent of the original Exchange exploit vector, which remains Not Emulated. |
 | Execution | BITS Jobs | T1197 | Having gained a foothold, Medusa delivered additional tools using native Windows utilities, consistent with their LOL strategy. | Medusa was observed using PowerShell to invoke a bitsadmin transfer, downloading a compressed file (baby.zip) containing ConnectWise from a file hosting site (filemail.com). | Unit 42, MITRE Group Page | Y (T1197-2: Bitsadmin Download (PowerShell)) | Emulated — see Detection Engineering for a notable data-visibility limitation discovered during this hunt. |
-| Command and Control | Remote Desktop Software | T1219.002 | | | | | |
+| Command and Control | Remote Desktop Software | T1219.002 | Given Medusa's preference for trusted, LOLBin-style tooling over custom malware, they deployed a legitimate RMM tool to gain remote access to the victim host. | Medusa deployed ConnectWise and configured it to connect to attacker-controlled infrastructure rather than the victim organization's own, giving them a legitimate-looking remote access vector. | Unit 42 | N (no Atomic Red Team coverage for T1219.002) | Not Emulated — would require dedicated attacker-controlled infrastructure and a licensed RMM trial; scoped as a candidate for a future, dedicated lab exercise rather than this report. |
+| Defense Evasion | Indicator Removal: File Deletion | T1070.004 | Medusa will cover their tracks by removing previously used artifacts to accomplish their objectives. | Medusa deleted the files used in previous stages of the attack to avoid detection. | CISA Advisory | N (no packaged Atomic test; reproduced manually via native deletion, consistent with Medusa's documented low-sophistication cleanup approach) | Emulated — reproduced by deleting the T1197 test artifact (bitsadmin2_flag.ps1) from %TEMP%. See Detection Engineering for a Sysmon event-ID nuance discovered during this hunt. |
 
 ---
 
@@ -43,6 +44,7 @@ Where a technique could not be reproduced in this lab (due to missing infrastruc
 |---|---|---|---|---|
 | Persistence | Web Shell | T1505.003 | Figures 1a, 1b | Atomic Red Team (T1505.003-1) wrote cmd.aspx to `C:\inetpub\wwwroot` via xcopy.exe. Sysmon Event ID 11 (FileCreate) captured the event and forwarded it to Wazuh. No existing Wazuh rule matched this event — a custom detection rule (ID 100001) was written to close the gap. See Detection Engineering section below. |
 | Execution | BITS Jobs | T1197 | Figures 2a, 2b, 2c | Atomic Red Team (T1197-2) ran `Start-BitsTransfer` via PowerShell to download a file to `$env:TEMP`. Sysmon's Event ID 11 never captured the final filename — BITS downloads via a temporary, randomly-named file and completes with a rename, which Sysmon does not log. Windows' native BITS-Client operational log (`Microsoft-Windows-Bits-Client/Operational`) provided full visibility where Sysmon could not. A custom detection rule (ID 100002) built on process creation (Event ID 1) and `ParentCommandLine` content — rather than file creation — was written to close the gap, and correctly fired after a regex fix (see Detection Engineering). |
+| Defense Evasion | Indicator Removal: File Deletion | T1070.004 | Figures 3a, 3b | The T1197 test artifact (bitsadmin2_flag.ps1) was deleted from `%TEMP%`, consistent with CISA's documented Medusa cleanup behavior. Wazuh's default ruleset had a base classification rule for this event but no actual alerting logic (level 0). A custom rule (ID 100003) was written and initially failed to fire — deletion surfaced as Sysmon Event ID 26 (FileDeleteDetected), not 23 (FileDelete) as expected, requiring the rule's `if_sid` reference to be corrected. See Detection Engineering. |
 
 ---
 
@@ -86,6 +88,20 @@ Two infrastructure gaps were also identified and resolved in the course of this 
 Windows' own native BITS-Client operational log (`Microsoft-Windows-Bits-Client/Operational`) was checked as an alternative data source and provided complete visibility: transfer-started and transfer-complete events, tied to the true source URL, with full fidelity.
 
 Given this Sysmon limitation, detection was deliberately built on **Event ID 1 (ProcessCreate)** and the `ParentCommandLine` field rather than file creation — catching the *invocation* of BITS rather than trying to observe its output on disk. An initial version of the rule failed to fire because the command line captured by Sysmon contained the literal, unexpanded environment variable reference `$env:TEMP`, not the resolved path (`C:\Users\...\AppData\Local\Temp\...`) — a real-world nuance, since attackers commonly use environment variables specifically because they are portable across victim usernames. The rule pattern was corrected to match the variable reference directly. `wazuh-logtest` could not be used to validate this rule during development, since manually-constructed JSON test events cannot recreate the internal message format Wazuh's `eventchannel` log source produces, meaning validation had to be performed against live, re-triggered telemetry instead.
+
+### Figure 3a: T1070.004 — File Deletion Command
+![Figure 3a - Deletion Command](screenshots/figure3a-atomic-execution.png)
+
+**Caption:** The T1197 test artifact (bitsadmin2_flag.ps1) removed from `%TEMP%` via PowerShell's `Remove-Item`, reproducing CISA's documented Medusa cleanup behavior. Not a packaged Atomic Red Team test — manually reproduced, consistent with the low-sophistication, native-tooling cleanup approach CISA describes.
+
+### Figure 3b: T1070.004 — File Deletion Detected
+![Figure 3b - Wazuh Alert](screenshots/figure3b-wazuh-alert.png)
+
+**Caption:** Wazuh Discover view showing custom rule 100003 firing at rule.level 8, correctly identifying the deletion of `bitsadmin2_flag.ps1` from `%TEMP%` as Sysmon Event ID 26 (FileDeleteDetected), attributed to powershell.exe.
+
+**Narrative:** CISA's advisory states that Medusa actors delete their previously used tools and artifacts after completing their objectives. This was reproduced by deleting the T1197 test file from `%TEMP%`. Wazuh's default ruleset was checked for existing coverage first: a base classification rule for Sysmon Event ID 23 (FileDelete) exists (`61651`), but at severity level 0 — meaning the event is categorized but never evaluated for maliciousness, the same "classified but not alerted" pattern found during the T1505.003 hunt.
+
+A custom rule (100003) was written, initially chained under rule 61651 (Event ID 23). It did not fire. Investigation in `wazuh-archives-*` revealed the actual event generated was **Sysmon Event ID 26 (FileDeleteDetected)**, not Event ID 23 (FileDelete) — two distinct Sysmon event types for file deletion, where 23 additionally archives a copy of the deleted file's contents and 26 only logs that a deletion occurred. Olaf Hartong's Sysmon configuration is evidently set to log this deletion path via the lighter-weight Event ID 26 rather than 23. The rule's `if_sid` reference was corrected to `61654` (the equivalent base classification rule for Event ID 26), after which it fired correctly.
 
 ---
 
@@ -164,6 +180,37 @@ Unlike T1505.003, this technique could not be reliably detected via file creatio
 - **Destination path over source domain.** An earlier design option considered matching against known-malicious source domains, but this was rejected as fragile — attacker infrastructure changes constantly, while writing to a user-writable Temp directory (rather than a system-managed path) is a more durable behavioral signal.
 - **Environment variable matching, not just literal paths.** The first version of this rule matched only the literal expanded path (`AppData\Local\Temp`) and failed to fire, because Sysmon captured the command line exactly as typed — `$env:TEMP`, an unresolved variable reference. The pattern was corrected to match the variable syntax directly (`\$env:TEMP`, `%TEMP%`) alongside the expanded path. This is a meaningful real-world consideration: attackers commonly use environment variables specifically because they resolve correctly regardless of the victim's username, making literal-path-only detection logic unreliable against portable attacker scripts.
 - **Severity level 12**, one level below the T1505.003 rule's 15 — reasoning being a BITS-to-Temp invocation is a strong staging indicator but, unlike a live web shell already dropped in an internet-facing web root, does not by itself confirm a completed, persistent compromise.
+
+---
+
+## Detection Engineering: Custom Rule (T1070.004)
+
+Wazuh's default ruleset was checked before writing anything new. A base classification rule exists for Sysmon Event ID 23 (FileDelete) — `61651` — but at severity level 0, meaning the event is tagged into the `sysmon_event_23` group but never evaluated for maliciousness. This is the same "classified but not alerted" pattern already found during the T1505.003 hunt.
+
+**Rule location:** `/var/ossec/etc/rules/local_rules.xml`, third rule group, scoped to `sysmon_eid23_detections`
+
+**Rule ID:** `100003`
+
+```xml
+<group name="sysmon,sysmon_eid23_detections,windows,">
+  <rule id="100003" level="8">
+    <if_sid>61654</if_sid>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)\.(ps1|bat|exe|dat)</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)(AppData\\\\Local\\\\Temp|\$env:TEMP|%TEMP%)</field>
+    <options>no_full_log</options>
+    <description>Possible malicious file deletion in user Temp directory: $(win.eventdata.targetFilename)</description>
+    <mitre>
+      <id>T1070.004</id>
+    </mitre>
+  </rule>
+</group>
+```
+
+**Design decisions:**
+- **`if_sid` chosen deliberately over `if_group`**, unlike the first two rules in this ruleset. Since only one rule exists for this event type at all (no ecosystem of related vendor rules sharing a group tag), chaining directly to the specific rule ID is the more precise and intentional choice.
+- **Scoped to the same four extensions and Temp/AppData location logic as rule 100002**, reflecting the same reasoning: a deletion alone is far too common (browsers, installers, and Windows itself delete Temp files constantly) to be a useful signal on its own. Narrowing to script/executable extensions in a user-writable staging location keeps the rule meaningful. `.dat` was included specifically because it is a documented extension threat actors use to disguise payloads as innocuous data files, even though it is neither a script nor a native executable type.
+- **Severity level 8 — deliberately lower than both prior rules.** Reasoning: by the time this event fires, the activity it's flagging has already concluded and the artifact is gone — there's comparatively less immediate opportunity for real-time response compared to rule 100002 (BITS invocation), which fires while an attacker may still be actively staging their next step.
+- **`if_sid` initially pointed to the wrong base rule.** The rule was first built against `61651` (Event ID 23 / FileDelete) and did not fire. Investigation confirmed the actual event generated on deletion was **Event ID 26 (FileDeleteDetected)**, not 23 — two distinct Sysmon event types, where 23 additionally archives the deleted file's content and 26 only records that a deletion occurred. The Sysmon configuration in use logs this specific deletion path via Event 26. The rule was corrected to chain under `61654`, the base classification rule for Event 26, after which it fired correctly.
 
 ---
 
